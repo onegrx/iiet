@@ -24,6 +24,7 @@ int main() {
   assert(!isPrime(20));
   assert(abs(-3)==3);
   assert(factorial(5)==120);
+  assert(gcd(9,12)==3);
 }
 
 int max(int a, int b) { 
@@ -45,8 +46,9 @@ int digits(int number) {
 }
 
 bool isPrime(int n) {
+  if(n == 1) return false;
   bool prime = true;
-  for(int i = 2; (i*i < n) && prime; i++) {
+  for(int i = 2; (i*i <= n) && prime; i++) {
     if(n % i == 0) prime = false;
   }
   return prime;
@@ -94,4 +96,14 @@ vector<int> primeFactors(int n) {
   
 
 
+}
+
+int gcd(int a, int b) {
+  int c;
+  while(b != 0) {
+    c = b;
+    b = a % b;
+    a = c;
+  }  
+  return a;
 }
