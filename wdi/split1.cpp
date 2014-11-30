@@ -3,26 +3,30 @@
 #include <string>
 using namespace std;
 
-void rozklad(int n, string s, int poprz) {
-
+void split(int n, string s, int prev) {
+  
   if(n < 0) return;
   
-  if(n==0) {
+  if(n == 0) {
   
     cout << s << endl;
     return;
     
   }
   
-  for(int i = poprz; i >= 1; i--) 
-    rozklad(n - i, s + to_string(i) + " ", i);
+  for(int i = prev; i >= 1; i--) 
+    split(n - i, s + to_string(i) + " ", i);
     
+}
+
+void split(int n) {
+  split(n, "", n);
 }
 
 int main() {
   
   int n;
   cin >> n;
-  rozklad(n,"",n);
+  split(n);
   return 0;
 }
