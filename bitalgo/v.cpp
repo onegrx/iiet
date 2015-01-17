@@ -9,20 +9,29 @@ class Queue {
   
     void push(int value);
     void pop();
-    int front();
-  
+    void front();
+    
   private:
   
     int *storage;
     int f, r; //front, rear
     int size;  
+    
+    bool isFull() {
+      return (r + 1) % size == f;
+    }
+    
+    bool isEmpty() {
+      return (r == (-1)) && (f == (-1));
+    }
+    
 };
 
 Queue::Queue(int n) {
   
   storage = new int[n];
-  f = 0;
-  r = 0;
+  f = -1;
+  r = -1;
   size = n;
   
 }
@@ -35,22 +44,44 @@ Queue::~Queue() {
 
 void Queue::push(int value) {
 
+  if(isFull()) {
+    cout << "FULL" << endl;
+    return;
+  }
+  
+  if(isEmpty()) 
+    f = r = 0;
+  else 
+    r = (r + 1) % size;
+    
   storage[r] = value;
-  r++;
-  if(r >= size) r = 0;
+  cout << "OK" << endl;
   
 }
 
 void Queue::pop() {
   
-  f++;
-  f %= size;
+  if(isEmpty()) {
+    cout << "EMPTY" << endl;
+    return;
+  }
+  if (f == r)
+    f = r = (-1);
+  else
+    f = (f + 1) % size;
+    
+  cout << "OK" << endl;
   
 }
 
-int Queue::front() {
-
-  return storage[f];
+void Queue::front() {
+  
+  if(!isEmpty()){
+    cout << storage[f] << endl;
+  }
+  else {
+    cout << "NONE" << endl;  
+  }
   
 }
 
@@ -81,7 +112,7 @@ int main() {
     }
     else if (cmd == "FRONT") {
       
-      cout << q.front() << endl;
+      q.front();
       
     }
     
