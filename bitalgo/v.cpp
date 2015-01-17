@@ -14,15 +14,15 @@ class Queue {
   private:
   
     int *storage;
-    int p, q;
+    int f, r; //front, rear
     int size;  
 };
 
 Queue::Queue(int n) {
   
   storage = new int[n];
-  p = 0;
-  q = 0;
+  f = 0;
+  r = 0;
   size = n;
   
 }
@@ -35,22 +35,22 @@ Queue::~Queue() {
 
 void Queue::push(int value) {
 
-  storage[q] = value;
-  q++;
-  if(q >= size) q = 0;
+  storage[r] = value;
+  r++;
+  if(r >= size) r = 0;
   
 }
 
 void Queue::pop() {
   
-  p++;
-  p %= size;
+  f++;
+  f %= size;
   
 }
 
 int Queue::front() {
 
-  return storage[p];
+  return storage[f];
   
 }
 
