@@ -5,5 +5,5 @@ This repository contains some of work from university classes and additional act
 Contents:
 * WDI - Introduction to Computer Science
 * JITP - Software engineering
-
+* BITALGO - Extracurricular algorithm design classes
 
