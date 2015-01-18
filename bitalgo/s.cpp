@@ -29,6 +29,16 @@ class Train {
     }
 };
 
+Train* findTrainAdress(Train* head, string t) {
+  
+  Train* tmp = head;
+  while((tmp != nullptr) && (tmp -> value != t))
+    tmp = tmp -> next;
+  //we assume given train exists
+  return tmp;
+  
+}
+
 Train* NEW(Train* head, string t, string p) {
   
   Person* person = new Person(p, nullptr, nullptr);
@@ -37,14 +47,33 @@ Train* NEW(Train* head, string t, string p) {
 }
 
 Train* BACK(Train* head, string t, string p) {
-  
-  Train* tmp = head;
-  while((tmp != nullptr) && (tmp -> value != t))
-    tmp = tmp -> next;
-  
-  Person* q = tmp -> head;
+    
+  Person* q = findTrainAdress(head,t) -> head;
   while(q -> next != nullptr) q = q -> next;
   q -> next = new Person(p, q, nullptr);
+  return head;
+}
+
+Train* FRONT(Train* head, string t, string p) {
+  
+  Train* train = findTrainAdress(head,t);
+  Person* first =  train -> head;
+  Person* zero = new Person(p, nullptr, first);
+  train -> head = zero;
+  first -> prev = zero;
+  return head;
+}
+
+Train* PRINT(Train* head, string t) {
+
+  Train* train = findTrainAdress(head, t);
+  cout << "\"" << t << "\":" << endl;
+  Person* q = train -> head;
+  while(q != nullptr) {
+    cout << q -> name << "<-";
+    q = q -> next;    
+  }
+  cout << endl;
   return head;
 }
 
@@ -57,7 +86,7 @@ void play(int orders) {
   while(orders--) {
     
     cin >> cmd;
-    if(cmd == "NEW") {
+    if (cmd == "NEW") {
       
       cin >> opt1 >> opt2;     
       train = NEW(train, opt1, opt2);
@@ -67,6 +96,19 @@ void play(int orders) {
 
       cin >> opt1 >> opt2;     
       train = BACK(train, opt1, opt2);
+      
+    }
+    
+    else if (cmd == "FRONT") {
+    
+      cin >> opt1 >> opt2; 
+      train = FRONT(train, opt1, opt2);
+      
+    }
+    else if (cmd == "PRINT") {
+    
+      cin >> opt1;
+      train = PRINT(train, opt1);
       
     }
     
