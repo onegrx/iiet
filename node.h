@@ -1,10 +1,12 @@
 class Node {
   public:
     int value;
+    Node* prev;
     Node* next;
     
-    Node(int val, Node* adress) {
+    Node(int val, Node* p, Node* n) {
       value = val;
-      next = adress;
+      prev = p;
+      next = n;
     }
 };
