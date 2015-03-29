@@ -46,6 +46,7 @@ int ssp2(int A[], int n) {
 }
 
 //Dynamic solution using recursion, O(n log n)
+//Good explanation in Cormen p. 70 - 73
 int ssp3(int A[], int n) {
 
     if(n == 0) return 0;
@@ -57,7 +58,7 @@ int ssp3(int A[], int n) {
     //_ _ _ _ _ _
     //<--- | --->
     
-    int lprim = 0, lpartial = 0;
+    int lprim = 0, lpartial = 0; //or rather -inf as above
     for(int i = n/2 -1; i > 0; i--) {
         lpartial += A[i];
         if(lpartial > lprim) lprim = lpartial;
@@ -73,7 +74,6 @@ int ssp3(int A[], int n) {
 }
 
 //Best solution using dynamic programming, O(n)
-
 int ssp4(int A[], int n) {
     
     int result = 0;
