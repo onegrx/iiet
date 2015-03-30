@@ -1,3 +1,4 @@
+
 I@IET
 ====
 This repository contains some of work from university classes and additional activties.
@@ -8,4 +9,5 @@ Contents:
 * BITALGO - Extracurricular algorithm design classes
 * BASH - Some simple projects from Introduction to UNIX Systems classes
 * ASD - Algorithms and Data Structures
+* EULER - Project Euler solutions
 
