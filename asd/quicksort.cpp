@@ -2,6 +2,9 @@
 #include <algorithm>
 using namespace std;
 
+//http://cs.stackexchange.com/questions/3/why-is-quicksort-better-than-other-sorting-algorithms-in-practice
+//http://cs.stackexchange.com/questions/11458/quicksort-partitioning-hoare-vs-lomuto
+
 //Lomuto's Method
 int partition(int A[], int p, int r) {
     int pivot = A[r];
