@@ -22,8 +22,8 @@ struct
 	else fib(n-1) + fib(n-2);
  
   fun gcd (a:int, b:int) : int =
-	if a = 0 then b;
-	else if b = 0 then a;
+	if a = 0 then b
+	else if b = 0 then a
 	else if a > b then gcd(a mod b, b)
 	else gcd(a, b mod a);
 
