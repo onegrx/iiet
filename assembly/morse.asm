@@ -20,8 +20,10 @@ data1 segment
     string_to_morse db CR, LF, "Enter the string:", CR, LF, '$'
     morse_to_string db CR, LF, "Enter the Morse's code:", CR, LF, '$'
     
-	newline db CR, LF, '$' 
-	prompt db CR,LF,">> ",'$'
+    morse_list db "a.-i..o---e.z--..n-.r.-.w.--s...t-c-.-.y-.--k-.-d-..p.--.m--u..-j.---l.-..b-...g--.h....f..-.v...-x-..-0-----1.----2..---3...--4....-5.....6-....7--...8---..9----.$"
+    
+    newline db CR, LF, '$'
+    prompt db CR,LF,">> ",'$'
     
 data1 ends
 
@@ -29,10 +31,10 @@ code1 segment
     
     begin:
         ;Stack initialize
-		mov	ax, seg p_stack	
-		mov	ss, ax
-		mov	sp, offset p_stack	
-
+        mov ax, seg p_stack
+        mov ss, ax
+        mov sp, offset p_stack
+        
         ;Copy address of data1 segment to DS through AX 
 		mov	ax, seg data1
 		mov	ds, ax
@@ -71,15 +73,52 @@ code1 segment
         call puts
         jmp menu
         
+        ;;;;;;;;;;;;;;;;;;;;
         ;;;ENCODE SECTION;;;
     encode:
         mov dx, offset string_to_morse
         call puts
         mov dx, offset input
         call get_str
-        ;;Place more code here
+        mov bx, offset input
+        mov al, byte ptr ds:[bx]
+    encode_each:
+        cmp al, '$' ;;hint maybe CR?
+        je finish
+        call up_to_low
+        call encode_char
+        inc bx
+        mov al, byte ptr ds:[bx]
+        jmp encode_each
+    encode_char:    
+        mov dl, al
+        mov bx, offset morse_list
+        mov al, byte ptr ds:[bx]
+    find:
+        cmp dl, al
+        je put_encoded_char
+        inc bx
+        mov al, byte ptr ds:[bx]
+        jmp find
+    put_encoded_char:
+        inc bx
+        mov al, byte ptr ds:[bx] ;Should be first/next dash or dot
+        cmp al, '.'
+        je put_one_dot_or_dash
+        cmp al, '-'
+        je put_one_dot_or_dash
         jmp finish
         
+    put_one_dot_or_dash:    
+        mov dl, al
+        call putc
+        jmp put_encoded_char
+        
+        
+        ;;hint what if not found
+        ;;jmp finish
+        
+        ;;;;;;;;;;;;;;;;;;;;
         ;;;DECODE SECTION;;;
     decode:
         mov dx, offset morse_to_string
@@ -153,6 +192,17 @@ code1 segment
         pop bx
         pop ax
         ret
+        
+    ;Change A-Z into a-z
+    up_to_low:
+        cmp al, 'A'
+        jl up_to_low_end
+        cmp al, 'Z'
+        jg up_to_low_end
+        add al, 32d
+    up_to_low_end:
+        ret
+        
         
 code1 ends
 
