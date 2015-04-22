@@ -66,6 +66,7 @@ code1 segment
         ;Read option into AL and navigate to proper function
         call getc
         
+        
         cmp al, '0'
         je finish
         cmp al, '1'
@@ -91,18 +92,16 @@ code1 segment
         
         mov bx, offset bufferSize
         inc bx
-        mov cx, bx ;CX shows number of read chars
+        mov cl, byte ptr ds:[bx] ;CX shows number of read chars
         inc bx ;BX shows the first read char
+        
     encode_each:
-        cmp cx, 0d
+        cmp cl, 0d
         je finish
         mov al, byte ptr ds:[bx] ;AL is the first letter
         call up_to_low
         ;Now AL contains first read character in lower case
-        call encode_char
-        inc bx
-        dec cx
-        jmp encode_each
+    
     encode_char:    
         mov si, offset morse
         mov ah, byte ptr ds:[si]
@@ -116,12 +115,14 @@ code1 segment
         inc si
         mov dx, si
         call puts
+        mov dl, ' '
+        call putc
+        inc bx
+        dec cx
+        jmp encode_each
+
         
-   
-        
-        
-        
-        jmp finish
+
         
         
         ;;;;;;;;;;;;;;;;;;;;
