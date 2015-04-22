@@ -8,9 +8,13 @@ data1 segment
     
     stars db "********************************", CR, LF, '$'
     entry db "ASCII <-> Morse's Code Covnerter", CR, LF, '$'
-    ;;hint consider input to 0Ah function of int 021h
-    input db 102d dup(?) ;102 bytes because of adding 0 at the end
     farewell db CR, LF, "Goodbye", CR, LF, '$'
+    
+    morse db " .-..$a.-$b-...$c-.-.$d-..$e.$f..-.$g--.$"
+    
+    bufferSize db 101  ;100 char + return
+    inputLength db 0 ;number of read characters
+    buffer db 101 dup('$') ;actual buffer
     
     option0 db " [0] Exit program", CR, LF, '$'
     option1 db " [1] Convert ASCII string to Morse's code", CR, LF, '$'
@@ -21,7 +25,7 @@ data1 segment
     string_to_morse db CR, LF, "Enter the string:", CR, LF, '$'
     morse_to_string db CR, LF, "Enter the Morse's code:", CR, LF, '$'
     
-    morse_list db "a.-i..o---e.z--..n-.r.-.w.--s...t-c-.-.y-.--k-.-d-..p.--.m--u..-j.---l.-..b-...g--.h....f..-.v...-x-..-0-----1.----2..---3...--4....-5.....6-....7--...8---..9----.$"
+    ;morse_list db "a.-i..o---e.z--..n-.r.-.w.--s...t-c-.-.y-.--k-.-d-..p.--.m--u..-j.---l.-..b-...g--.h....f..-.v...-x-..-0-----1.----2..---3...--4....-5.....6-....7--...8---..9----.$"
     
     newline db CR, LF, '$'
     prompt db CR,LF,">> ",'$'
@@ -76,57 +80,54 @@ code1 segment
         
         ;;;;;;;;;;;;;;;;;;;;
         ;;;ENCODE SECTION;;;
+        ;;;;;;;;;;;;;;;;;;;;
     encode:
         mov dx, offset string_to_morse
         call puts
-        mov dx, offset input
-        call get_str
-        mov bx, offset input
-        mov al, byte ptr ds:[bx]
+        mov dx, offset bufferSize
+        call gets
+        mov dx, offset newline
+        call puts
+        
+        mov bx, offset bufferSize
+        inc bx
+        mov cx, bx ;CX shows number of read chars
+        inc bx ;BX shows the first read char
     encode_each:
-        cmp al, '$' ;;hint maybe CR?
+        cmp cx, 0d
         je finish
+        mov al, byte ptr ds:[bx] ;AL is the first letter
         call up_to_low
+        ;Now AL contains first read character in lower case
         call encode_char
         inc bx
-        mov al, byte ptr ds:[bx]
+        dec cx
         jmp encode_each
     encode_char:    
-        mov dl, al
-        mov bx, offset morse_list
-        mov al, byte ptr ds:[bx]
+        mov si, offset morse
+        mov ah, byte ptr ds:[si]
     find:
-        cmp dl, al
+        cmp al, ah
         je put_encoded_char
-        inc bx
-        mov al, byte ptr ds:[bx]
+        inc si
+        mov ah, byte ptr ds:[si]
         jmp find
     put_encoded_char:
-        inc bx
-        mov al, byte ptr ds:[bx] ;Should be first/next dash or dot
-        cmp al, '.'
-        je put_one_dot_or_dash
-        cmp al, '-'
-        je put_one_dot_or_dash
+        inc si
+        mov dx, si
+        call puts
+        
+   
+        
+        
+        
         jmp finish
         
-    put_one_dot_or_dash:    
-        mov dl, al
-        call putc
-        jmp put_encoded_char
-        
-        
-        ;;hint what if not found
-        ;;jmp finish
         
         ;;;;;;;;;;;;;;;;;;;;
         ;;;DECODE SECTION;;;
+        ;;;;;;;;;;;;;;;;;;;;
     decode:
-        mov dx, offset morse_to_string
-        call puts
-        mov dx, offset input
-        call get_str
-        ;;Place more code here
         jmp finish
         
     ;Exit program with code 0
@@ -136,6 +137,11 @@ code1 segment
         mov ax, 4c00h
         int	021h
         
+        
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;Reading,writing and other functions
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+ 
     ;Display string from DS:DX
     puts:
         push ax
@@ -144,9 +150,13 @@ code1 segment
         pop ax
         ret
     
-    ;Read string into DS:DS, see Ah for 021h 
+    ;Read string into DS:DX
     gets:
-        nop
+        push ax
+        mov ah, 0Ah
+        int 021h
+        pop ax
+        ret
         
     ;Display one character from DL
     putc:
@@ -161,45 +171,7 @@ code1 segment
         mov ah, 01h
         int 021h
         ret
-    
-    ;Display string terminated by 0 whose address is in DX
-    put_str:
-        push ax
-        push bx
-        mov bx, dx
-        mov al, byte ptr [bx]
-    put_loop:
-        cmp al, 0
-        je put_finish
-        call putc
-        inc bx
-        mov al, byte ptr [bx]
-        jmp put_loop
-    put_finish:
-        pop bx
-        pop ax
-        ret
-
-    ;Read string terminated by CR into array whose address is in DX
-    get_str:
-        push ax
-        push bx
-        mov bx, dx
-        call getc
-        mov byte ptr [bx], al ;Place just inserted character into array
-    get_loop:
-        cmp al, 13d
-        je get_finish
-        inc bx
-        call getc
-        mov byte ptr [bx], al
-        jmp get_loop
-    get_finish:
-        mov byte ptr [bx], 0 ;Terminate it with 0
-        pop bx
-        pop ax
-        ret
-        
+     
     ;Change A-Z into a-z
     up_to_low:
         cmp al, 'A'
