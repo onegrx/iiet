@@ -8,12 +8,13 @@ data1 segment
     
     stars db "********************************", CR, LF, '$'
     entry db "ASCII <-> Morse's Code Covnerter", CR, LF, '$'
+    ;;hint consider input to 0Ah function of int 021h
     input db 102d dup(?) ;102 bytes because of adding 0 at the end
     farewell db CR, LF, "Goodbye", CR, LF, '$'
     
-    option0 db "[0] Exit program", CR, LF, '$'
-    option1 db "[1] Convert ASCII string to Morse's code", CR, LF, '$'
-    option2 db "[2] Convert Morse's code to ASCII string", CR, LF, '$'
+    option0 db " [0] Exit program", CR, LF, '$'
+    option1 db " [1] Convert ASCII string to Morse's code", CR, LF, '$'
+    option2 db " [2] Convert Morse's code to ASCII string", CR, LF, '$'
     your_option db "Select option: $"
     invalid_option db CR, LF, "Invalid option, please try again.", CR, LF, '$'
 
@@ -136,10 +137,16 @@ code1 segment
         int	021h
         
     ;Display string from DS:DX
-    puts: 
+    puts:
+        push ax
         mov ah, 09h
         int 021h
+        pop ax
         ret
+    
+    ;Read string into DS:DS, see Ah for 021h 
+    gets:
+        nop
         
     ;Display one character from DL
     putc:
