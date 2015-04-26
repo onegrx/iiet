@@ -10,7 +10,9 @@ data1 segment
     entry db "ASCII <-> Morse's Code Covnerter", CR, LF, '$'
     farewell db CR, LF, "Goodbye", CR, LF, '$'
     
-    morse db " .-..$a.-$b-...$c-.-.$d-..$e.$f..-.$g--.$h....$i..$j.---$k-.-$l.-..$m--$n-.$o---$p.--.$q--.-$r.-.$s...$t-$u..-$v...-$w.--$x-..-$y-.--$z--..$0-----$1.----$2..---$3...--$4....-$5.....$6-....$7--...$8---..$9----.$"
+    ;Array "morse" for encoding, "morse_heap" for decoding
+    morse db " .-..-$a.-$b-...$c-.-.$d-..$e.$f..-.$g--.$h....$i..$j.---$k-.-$l.-..$m--$n-.$o---$p.--.$q--.-$r.-.$s...$t-$u..-$v...-$w.--$x-..-$y-.--$z--..$0-----$1.----$2..---$3...--$4....-$5.....$6-....$7--...$8---..$9----.$"
+    morse_heap db 0h, "etianmsurwdkgohvf,l,pjbxcyzq,,54,3,,,2, ,,,,,16,,,,,,,7,,,8,90$"
     
     bufferSize db 101  ;100 char + return
     inputLength db 0 ;number of read characters
@@ -24,7 +26,7 @@ data1 segment
 
     string_to_morse db CR, LF, "Enter the string:", CR, LF, '$'
     morse_to_string db CR, LF, "Enter the Morse's code:", CR, LF, '$'
-        
+    
     newline db CR, LF, '$'
     prompt db CR,LF,">> ",'$'
     
@@ -154,8 +156,50 @@ code1 segment
         ;;;DECODE SECTION;;;
         ;;;;;;;;;;;;;;;;;;;;
     decode:
-        jmp finish
+    
+        mov dx, offset string_to_morse
+        call puts
+        mov dx, offset bufferSize
+        call gets
+        mov dx, offset newline
+        call puts
         
+        mov bx, offset buffer
+        xor cx, cx
+ 
+    decode_each:
+        mov al, byte ptr ds:[bx] ;AL is the first letter  
+        
+        cmp al, CR
+        je print_morse ;special case for end
+        cmp al, ' '
+        je print_morse
+        
+        call decode_dot_or_dash
+        inc bx
+        jmp decode_each
+        
+    print_morse:
+        mov si, offset morse_heap
+        add si, cx
+        mov dl, byte ptr ds:[si]
+        call putc
+        
+        ;If it was CR and not space go to finish
+        cmp al, CR
+        je finish
+        
+        ;After putting a letter continue others
+        xor cx, cx
+        inc bx
+        jmp decode_each
+    
+
+        
+        ;;;;;;;;;;;;;;;;;;;;
+        ;;;;EXIT SECTION;;;;
+        ;;;;;;;;;;;;;;;;;;;;
+    
     ;Exit program with code 0
     finish:
         mov dx, offset farewell
@@ -167,6 +211,35 @@ code1 segment
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;Reading,writing and other functions
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    
+    ;Decode one dot or dash to increase CX pointer to heap
+    decode_dot_or_dash:
+        cmp al, '.'
+        je decode_dot
+        cmp al, '-'
+        je decode_dash
+        jmp no_dot_nor_dash
+        
+    decode_dot:
+        push ax
+        mov al, 2
+        mul cl
+        mov cl, al
+        add cl, 1
+        pop ax
+        jmp no_dot_nor_dash
+        
+    decode_dash:
+        push ax
+        mov al, 2
+        mul cl
+        mov cl, al
+        add cl, 2
+        pop ax
+        jmp no_dot_nor_dash
+        
+    no_dot_nor_dash:
+        ret
  
     ;Display string from DS:DX
     puts:
