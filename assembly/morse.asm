@@ -10,7 +10,7 @@ data1 segment
     entry db "ASCII <-> Morse's Code Covnerter", CR, LF, '$'
     farewell db CR, LF, "Goodbye", CR, LF, '$'
     
-    morse db " .-..$a.-$b-...$c-.-.$d-..$e.$f..-.$g--.$"
+    morse db " .-..$a.-$b-...$c-.-.$d-..$e.$f..-.$g--.$h....$i..$j.---$k-.-$l.-..$m--$n-.$o---$p.--.$q--.-$r.-.$s...$t-$u..-$v...-$w.--$x-..-$y-.--$z--..$0-----$1.----$2..---$3...--$4....-$5.....$6-....$7--...$8---..$9----.$"
     
     bufferSize db 101  ;100 char + return
     inputLength db 0 ;number of read characters
@@ -24,16 +24,21 @@ data1 segment
 
     string_to_morse db CR, LF, "Enter the string:", CR, LF, '$'
     morse_to_string db CR, LF, "Enter the Morse's code:", CR, LF, '$'
-    
-    ;morse_list db "a.-i..o---e.z--..n-.r.-.w.--s...t-c-.-.y-.--k-.-d-..p.--.m--u..-j.---l.-..b-...g--.h....f..-.v...-x-..-0-----1.----2..---3...--4....-5.....6-....7--...8---..9----.$"
-    
+        
     newline db CR, LF, '$'
     prompt db CR,LF,">> ",'$'
+    
+    dot db ".-.-.-$"
+    dash db "-....-$"
     
 data1 ends
 
 code1 segment
     
+        ;;;;;;;;;;;;;;;;;;;;
+        ;;;;MAIN SECTION;;;;
+        ;;;;;;;;;;;;;;;;;;;;
+        
     begin:
         ;Stack initialize
         mov ax, seg p_stack
@@ -65,7 +70,6 @@ code1 segment
         
         ;Read option into AL and navigate to proper function
         call getc
-        
         
         cmp al, '0'
         je finish
@@ -106,6 +110,10 @@ code1 segment
         mov si, offset morse
         mov ah, byte ptr ds:[si]
     find:
+        cmp al, '.'
+        je special_cases
+        cmp al, '-'
+        je special_cases
         cmp al, ah
         je put_encoded_char
         inc si
@@ -118,12 +126,29 @@ code1 segment
         mov dl, ' '
         call putc
         inc bx
-        dec cx
+        dec cl
         jmp encode_each
-
         
-
-        
+    special_cases:
+        cmp al, '.'
+        je dotcase
+        cmp al, '-'
+        je dashcase
+    dotcase:
+        mov dx, offset dot
+        call puts
+        jmp special_cases_end
+    dashcase:
+        mov dx, offset dash
+        call puts
+        jmp special_cases_end
+    special_cases_end:
+        mov dl, ' '
+        call putc
+        inc bx
+        dec cl
+        jmp encode_each
+                
         
         ;;;;;;;;;;;;;;;;;;;;
         ;;;DECODE SECTION;;;
