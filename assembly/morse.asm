@@ -27,6 +27,9 @@ data1 segment
     string_to_morse db CR, LF, "Enter the string:", CR, LF, '$'
     morse_to_string db CR, LF, "Enter the Morse's code:", CR, LF, '$'
     
+    invalid_entered_input1 db CR, LF, "You have just entered a non valid character: ", '$'
+    invalid_entered_input2 db CR, LF, "Please try again.", CR, LF, '$'
+    
     newline db CR, LF, '$'
     prompt db CR,LF,">> ",'$'
     
@@ -48,8 +51,8 @@ code1 segment
         mov sp, offset p_stack
         
         ;Copy address of data1 segment to DS through AX 
-		mov	ax, seg data1
-		mov	ds, ax
+        mov	ax, seg data1
+        mov	ds, ax
         
         ;Display entry message and options
         mov dx, offset newline
@@ -107,6 +110,8 @@ code1 segment
         mov al, byte ptr ds:[bx] ;AL is the first letter
         call up_to_low
         ;Now AL contains first read character in lower case
+        ;Ensure it is a valid character in AL.
+        jmp validate 
     
     encode_char:    
         mov si, offset morse
@@ -212,6 +217,34 @@ code1 segment
     ;Reading,writing and other functions
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     
+    ;Check if the character in AL has some meaning e.g. letter
+    ;This is not 'call function' but even though it's logical
+    validate:
+        cmp al, '.'
+        je well
+        cmp al, '-'
+        je well
+        cmp al, ' '
+        je well
+        cmp al, '0'
+        jl invalid_input
+        cmp al, '9'
+        jle well
+        cmp al, 'a'
+        jl invalid_input
+        cmp al, 'z'
+        jle well
+    well:
+        jmp encode_char
+    invalid_input:
+        mov dx, offset invalid_entered_input1
+        call puts
+        mov dl, al
+        call putc
+        mov dx, offset invalid_entered_input2
+        call puts
+        jmp encode
+        
     ;Decode one dot or dash to increase CX pointer to heap
     decode_dot_or_dash:
         cmp al, '.'
