@@ -3,6 +3,7 @@
 
 CR equ 13d
 LF equ 10d
+HEAP_LEN equ 63d
 
 data1 segment
     
@@ -30,6 +31,8 @@ data1 segment
     invalid_entered_input1 db CR, LF, "You have just entered a non valid character: ", '$'
     invalid_entered_input2 db CR, LF, "Please try again.", CR, LF, '$'
     
+    invalid_entered_morse db CR, LF, "You have just entered a bad Morse's code character, please try again."
+    
     newline db CR, LF, '$'
     prompt db CR,LF,">> ",'$'
     
@@ -51,8 +54,8 @@ code1 segment
         mov sp, offset p_stack
         
         ;Copy address of data1 segment to DS through AX 
-        mov	ax, seg data1
-        mov	ds, ax
+		mov	ax, seg data1
+		mov	ds, ax
         
         ;Display entry message and options
         mov dx, offset newline
@@ -161,8 +164,7 @@ code1 segment
         ;;;DECODE SECTION;;;
         ;;;;;;;;;;;;;;;;;;;;
     decode:
-    
-        mov dx, offset string_to_morse
+        mov dx, offset morse_to_string
         call puts
         mov dx, offset bufferSize
         call gets
@@ -186,6 +188,13 @@ code1 segment
         
     print_morse:
         mov si, offset morse_heap
+        
+        ;Check if CX (CL) is in the right scope and non zero
+        cmp cl, HEAP_LEN
+        jg bad_code
+        cmp cl, 00h
+        je bad_code
+        
         add si, cx
         mov dl, byte ptr ds:[si]
         call putc
@@ -199,7 +208,10 @@ code1 segment
         inc bx
         jmp decode_each
     
-
+    bad_code:
+        mov dx, offset invalid_entered_morse
+        call puts
+        jmp decode
         
         ;;;;;;;;;;;;;;;;;;;;
         ;;;;EXIT SECTION;;;;
@@ -245,7 +257,7 @@ code1 segment
         call puts
         jmp encode
         
-    ;Decode one dot or dash to increase CX pointer to heap
+    ;Decode one dot or dash to increase CL pointer to morse_heap
     decode_dot_or_dash:
         cmp al, '.'
         je decode_dot
