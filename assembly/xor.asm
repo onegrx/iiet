@@ -6,7 +6,7 @@ LF equ 10d
 
 data1 segment
     
-    syntax db "Syntax is: xor.exe [input_file] [output_file] ", '"', "passphare", '"', CR, LF, '$'
+    syntax db "Syntax is: xor.exe [input_file] [output_file] ", '"', "passphrase", '"', CR, LF, '$'
     
     input_file_handle dw ?
     input_file_name db 16 dup(0)
@@ -18,8 +18,11 @@ data1 segment
     
     ;Error messages
     invalid_syntax_no_args_message db "You have not entered any arguments.", CR, LF, '$'
-    invalid_syntax_interrupted_arg_message db "You have entered too less arguments or there are incorrect", CR, LF, '$'
-    invalid_syntax_entered_forbidden_char_message db "You have entered a forbidden character", CR, LF, '$'
+    invalid_syntax_interrupted_arg_message db "You have entered too less arguments or there are incorrect.", CR, LF, '$'
+    invalid_syntax_entered_forbidden_char_message db "You have entered a forbidden character.", CR, LF, '$'
+    invalid_syntax_missing_quotation_message db "A quotation mark is missing, please use the correct syntax given below.", CR, LF, '$'
+    invalid_syntax_empty_passphrase_message db "The key (passphrase) cannot be empty.", CR, LF, '$'
+    invalid_syntax_too_long_passphrase_message db "The key (passphrase) must be at most 20 characters long.", CR, LF, '$'
     
     newline db CR, LF, '$'
     
@@ -82,14 +85,44 @@ code1 segment
         jmp read_each_char_of_output_file    
         
     read_each_char_of_output_file_done:
-        ;READ PASSPHARE
+        ;READ PASSPHRASE
+        mov di, offset secret_key
+        inc si
+        dec cl
+        cmp cl, 0h
+        jle invalid_syntax_interrupted_arg
+        mov al, byte ptr ds:[si]
+        cmp al, '"'
+        jne invalid_syntax_missing_quotation
+        inc si
+        dec cl
+        xor bx, bx ;BX will contain a length of passphrase
+        mov al, byte ptr ds:[si]
+        cmp al, '"'
+        je invalid_syntax_empty_passphrase
+        ;Here there is one properly read char of passphrase
+        inc bh
+        mov byte ptr es:[di], al
+        inc si
+        inc di
+        dec cl
+    read_next_passphrase_char:
+        mov al, byte ptr ds:[si]
+        cmp al, '"'
+        je passphrase_read_done
+        inc bh ;One more char
+        cmp bh, 20d
+        jg invalid_syntax_too_long_passphrase
+        mov byte ptr es:[di], al
+        inc si
+        inc di
+        dec cl
+        cmp cl, 0h
+        jne read_next_passphrase_char
+        jmp invalid_syntax_missing_quotation
         
-        
-        
-        
-        
+    passphrase_read_done:
         nop
-        
         
         ;;;;;;;;;;;;;;;;;;;;
         ;;;;EXIT SECTION;;;;
@@ -97,23 +130,38 @@ code1 segment
     
     ;Exit program with code 0
     finish:
-        ;close files here todo
         mov ax, 4c00h
-        int	021h    
+        int	021h 
         
-    invalid_syntax_no_args:
-        mov dx, offset invalid_syntax_no_args_message
-        call puts
-        mov dx, offset syntax
-        call puts
-        jmp finish  
+        ;;;;;;;;;;;;;;;;;;;;
+        ;;;ERRORS SECTION;;;
+        ;;;;;;;;;;;;;;;;;;;;    
     
+    invalid_syntax_no_args:
+        mov dx, offset invalid_syntax_no_args_message 
+        jmp continue_error_message
+        
     invalid_syntax_interrupted_arg:
         mov dx, offset invalid_syntax_interrupted_arg_message
+        jmp continue_error_message
+        
+    invalid_syntax_missing_quotation:
+        mov dx, offset invalid_syntax_missing_quotation_message
+        jmp continue_error_message
+        
+    invalid_syntax_empty_passphrase:
+        mov dx, offset invalid_syntax_empty_passphrase_message
+        jmp continue_error_message
+        
+    invalid_syntax_too_long_passphrase:
+        mov dx, offset invalid_syntax_too_long_passphrase_message
+        jmp continue_error_message
+        
+    continue_error_message:
         call puts
         mov dx, offset syntax
         call puts
-        jmp finish         
+        jmp finish 
     
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;Reading,writing and other functions
