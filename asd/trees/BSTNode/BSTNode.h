@@ -9,6 +9,11 @@
 class BSTNode {
 
 public:
+
+
+    BSTNode(int key, BSTNode *parent, BSTNode *left, BSTNode *right) : key(key), parent(parent), left(left),
+                                                                       right(right) { }
+
     int key;
 
     BSTNode* parent;

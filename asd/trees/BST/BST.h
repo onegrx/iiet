@@ -14,8 +14,13 @@ class BST {
         BSTNode* root;
 
     public:
-        BSTNode* search(int key);
 
+    BST();
+    BST(int key);
+
+    BSTNode* search(int key);
+    void insert(int key);
+    void inorderWalk(BSTNode *start);
 };
 
 

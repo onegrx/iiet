@@ -3,6 +3,16 @@
 //
 
 #include "BST.h"
+#include <iostream>
+
+
+BST::BST() {
+    root = nullptr;
+}
+
+BST::BST(int key) {
+    root = new BSTNode(key, nullptr, nullptr, nullptr);
+}
 
 BSTNode* BST::search(int key) {
 
@@ -21,5 +31,46 @@ BSTNode* BST::search(int key) {
     }
 
     return tmp_root;
+
+}
+
+void BST::insert(int key) {
+
+    BSTNode* current_parent = nullptr;
+    BSTNode* tmp_root = root;
+
+    while(tmp_root != nullptr) {
+        current_parent = tmp_root;
+        if(key < tmp_root -> key) {
+            tmp_root = tmp_root -> left;
+        }
+        else {
+            tmp_root = tmp_root -> right;
+        }
+    }
+
+    BSTNode* bstNode = new BSTNode(key, current_parent, nullptr, nullptr);
+
+    if(current_parent == nullptr) {
+        root = bstNode;
+        return;
+    }
+    if(key < current_parent -> key) {
+        current_parent->left = bstNode;
+        return;
+    }
+    current_parent->right = bstNode;
+
+
+}
+
+
+void BST::inorderWalk(BSTNode *start) {
+
+    if(start != nullptr) {
+        inorderWalk(start->left);
+        std::cout << start->key << " ";
+        inorderWalk(start->right);
+    }
 
 }
