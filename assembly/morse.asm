@@ -197,6 +197,11 @@ code1 segment
         
         add si, cx
         mov dl, byte ptr ds:[si]
+        
+        ;If the program does not support this sign, even if it's in right scope.
+        cmp dl, ','
+        je bad_code
+        
         call putc
         
         ;If it was CR and not space go to finish
