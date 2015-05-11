@@ -11,16 +11,21 @@
 class BST {
 
     private:
-        BSTNode* root;
+    BSTNode* root;
 
     public:
-
     BST();
-    BST(int key);
 
     BSTNode* search(int key);
     void insert(int key);
-    void inorderWalk(BSTNode *start);
+    void inOrderWalk(BSTNode *start);
+
+    BSTNode* maxElement();
+    BSTNode* minElement();
+    BSTNode* successor(BSTNode);
+    BSTNode* predecessor(BSTNode);
+
+
 };
 
 

@@ -10,10 +10,6 @@ BST::BST() {
     root = nullptr;
 }
 
-BST::BST(int key) {
-    root = new BSTNode(key, nullptr, nullptr, nullptr);
-}
-
 BSTNode* BST::search(int key) {
 
     BSTNode* tmp_root = root;
@@ -65,12 +61,38 @@ void BST::insert(int key) {
 }
 
 
-void BST::inorderWalk(BSTNode *start) {
+void BST::inOrderWalk(BSTNode *start) {
 
     if(start != nullptr) {
-        inorderWalk(start->left);
+        inOrderWalk(start->left);
         std::cout << start->key << " ";
-        inorderWalk(start->right);
+        inOrderWalk(start->right);
     }
 
+}
+
+BSTNode *BST::maxElement() {
+    BSTNode* tmp_root = root;
+    while(tmp_root->right != nullptr) {
+        tmp_root = tmp_root->right;
+    }
+    return tmp_root;
+}
+
+BSTNode *BST::minElement() {
+    BSTNode* tmp_root = root;
+    while(tmp_root->left != nullptr) {
+        tmp_root = tmp_root->left;
+    }
+    return tmp_root;
+}
+
+BSTNode *BST::successor(BSTNode node) {
+    if(node.right != nullptr) {
+        //return minElement(node.right);
+    }
+}
+
+BSTNode *BST::predecessor(BSTNode node) {
+    return nullptr;
 }
