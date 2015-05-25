@@ -122,7 +122,35 @@ code1 segment
         jmp invalid_syntax_missing_quotation
         
     passphrase_read_done:
-        nop
+    
+        ;;;;;;;;;;;;;;;;;;;;;;;
+        ;OPENING FILES SECTION;
+        ;;;;;;;;;;;;;;;;;;;;;;;
+        
+        mov ax, seg data1
+        mov ds, ax
+        
+        ;OPEN INPUT FILE
+        mov dx, offset input_file_name
+        xor cx, cx
+        xor ax, ax
+        ;AL = 0 - read only
+        mov ah, 03dh
+        int 21h
+        ;If an error has occurred the CF is set to 1
+        jc error_cannot_open_file_input
+        mov word ptr ds:[input_file_handle], ax
+        
+        ;OPEN OUTPUT FILE
+        mov dx, offset output_file_name
+        xor cx, cx
+        xor ax, ax
+        mov al, 01h ;write only
+        mov ah, 03dh
+        int 21h
+        ;If an error has occurred the CF is set to 1
+        jc error_cannot_open_file_output
+        mov word ptr ds:[output_file_handle], ax        
         
         ;;;;;;;;;;;;;;;;;;;;
         ;;;;EXIT SECTION;;;;
@@ -162,6 +190,12 @@ code1 segment
         mov dx, offset syntax
         call puts
         jmp finish 
+        
+        
+    error_cannot_open_file_input:
+    error_cannot_open_file_output:
+        nop
+        jmp finish
     
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;Reading,writing and other functions
