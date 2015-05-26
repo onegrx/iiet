@@ -13,8 +13,12 @@ data1 segment
     output_file_handle dw ?
     output_file_name db 16 dup(0)
     secret_key db 20 dup(?)
+    key_length db ?
     
     buffer db 100 dup(?)
+    
+    ;Statements
+    data_encryption_done db "Data encryption has been finished succesfully.", CR, LF, '$'
     
     ;Error messages
     invalid_syntax_no_args_message db "You have not entered any arguments.", CR, LF, '$'
@@ -122,6 +126,9 @@ code1 segment
         jmp invalid_syntax_missing_quotation
         
     passphrase_read_done:
+        
+        mov si, offset key_length
+        mov byte ptr ds:[si], bh 
     
         ;;;;;;;;;;;;;;;;;;;;;;;
         ;OPENING FILES SECTION;
@@ -150,8 +157,68 @@ code1 segment
         int 21h
         ;If an error has occurred the CF is set to 1
         jc error_cannot_open_file_output
-        mov word ptr ds:[output_file_handle], ax        
+        mov word ptr ds:[output_file_handle], ax    
+
+    opened_files_succesfully:
         
+        ;;;;;;;;;;;;;;;;;;;;
+        ;;;;READ SECTION;;;;
+        ;;;;;;;;;;;;;;;;;;;;  
+        
+        ;AH = 3F
+        ;BX = file handle
+        ;CX = number of bytes to read
+        ;DS:DX = pointer to read buffer
+
+    read_section:
+        mov bx, word ptr ds:[input_file_handle]
+        mov cx, 100d
+        mov dx, offset buffer
+        mov ah, 03fh
+        int 021h
+        
+        cmp ax, 0h
+        je crypt_done
+        
+        mov dx, cx ;number of read bytes
+        mov si, offset secret_key
+        mov di, offset buffer
+        mov ah, 0 ;char counter
+
+    xorring:
+        cmp ah, ds:[key_length]
+        jne dont_scrool
+        mov ah, 0h
+        mov si, offset secret_key
+    dont_scrool:
+        mov al, byte ptr ds:[di] ;buffer sign
+        mov bl, byte ptr ds:[si] ;key sign
+        xor al, bl
+        mov byte ptr ds:[di], al ;back to buffer after xor
+        inc si
+        inc di
+        inc ah
+        loop xorring
+        
+        ;Saving buffer to output_file
+        
+        ;AH = 40
+        ;BX = file handle
+        ;CX = number of bytes to write
+        ;DS:DX = pointer to buffer to be written
+       
+        mov cx, dx ;number of read bytes which has been just xorred
+        mov bx, ds:[output_file_handle]
+        mov dx, offset buffer
+        mov ah, 040h
+        int 021h
+        
+        jmp read_section
+        
+    crypt_done:
+        mov dx, offset data_encryption_done
+        call puts
+                
         ;;;;;;;;;;;;;;;;;;;;
         ;;;;EXIT SECTION;;;;
         ;;;;;;;;;;;;;;;;;;;;
