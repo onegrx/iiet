@@ -127,15 +127,14 @@ code1 segment
         
     passphrase_read_done:
         
+        mov ax, seg data1
+        mov ds, ax
         mov si, offset key_length
         mov byte ptr ds:[si], bh 
     
         ;;;;;;;;;;;;;;;;;;;;;;;
         ;OPENING FILES SECTION;
         ;;;;;;;;;;;;;;;;;;;;;;;
-        
-        mov ax, seg data1
-        mov ds, ax
         
         ;OPEN INPUT FILE
         mov dx, offset input_file_name
@@ -158,8 +157,6 @@ code1 segment
         ;If an error has occurred the CF is set to 1
         jc error_cannot_open_file_output
         mov word ptr ds:[output_file_handle], ax    
-
-    opened_files_succesfully:
         
         ;;;;;;;;;;;;;;;;;;;;
         ;;;;READ SECTION;;;;
@@ -180,20 +177,23 @@ code1 segment
         cmp ax, 0h
         je crypt_done
         
-        mov dx, cx ;number of read bytes
+        mov es, ax ;number of read bytes
+        mov cx, ax
         mov si, offset secret_key
         mov di, offset buffer
         mov ah, 0 ;char counter
+        mov bx, offset key_length
 
     xorring:
-        cmp ah, ds:[key_length]
+         
+        cmp ah, ds:[bx]
         jne dont_scrool
         mov ah, 0h
         mov si, offset secret_key
     dont_scrool:
         mov al, byte ptr ds:[di] ;buffer sign
-        mov bl, byte ptr ds:[si] ;key sign
-        xor al, bl
+        mov dl, byte ptr ds:[si] ;key sign
+        xor al, dl
         mov byte ptr ds:[di], al ;back to buffer after xor
         inc si
         inc di
@@ -207,7 +207,7 @@ code1 segment
         ;CX = number of bytes to write
         ;DS:DX = pointer to buffer to be written
        
-        mov cx, dx ;number of read bytes which has been just xorred
+        mov cx, es ;number of read bytes which has been just xorred to save
         mov bx, ds:[output_file_handle]
         mov dx, offset buffer
         mov ah, 040h
@@ -218,7 +218,19 @@ code1 segment
     crypt_done:
         mov dx, offset data_encryption_done
         call puts
-                
+        
+        ;;;;;;;;;;;;;;;;;;;;
+        ;CLOSE FILE SECTION;
+        ;;;;;;;;;;;;;;;;;;;;
+        
+        mov bx, ds:[input_file_handle]
+        mov ah, 03eh
+        int 021h
+        
+        mov bx, ds:[output_file_handle]
+        mov ah, 03eh
+        int 021h
+        
         ;;;;;;;;;;;;;;;;;;;;
         ;;;;EXIT SECTION;;;;
         ;;;;;;;;;;;;;;;;;;;;
