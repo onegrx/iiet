@@ -5,21 +5,24 @@ CR equ 13d
 LF equ 10d
 
 data1 segment
-    
+
     syntax db "Syntax is: xor.exe [input_file] [output_file] ", '"', "passphrase", '"', CR, LF, '$'
-    
+
     input_file_handle dw ?
     input_file_name db 16 dup(0)
     output_file_handle dw ?
     output_file_name db 16 dup(0)
     secret_key db 20 dup(?)
     key_length db ?
-    
+
     buffer db 100 dup(?)
-    
+
     ;Statements
     data_encryption_done db "Data encryption has been finished succesfully.", CR, LF, '$'
-    
+    new_file_created db "New file was created.", CR, LF, '$'
+    arguments_correct db "Arguments from command line was parsed.", CR, LF, '$'
+    files_open db "Input and output files are opened.", CR, LF, '$'
+
     ;Error messages
     invalid_syntax_no_args_message db "You have not entered any arguments.", CR, LF, '$'
     invalid_syntax_interrupted_arg_message db "You have entered too less arguments or there are incorrect.", CR, LF, '$'
@@ -27,13 +30,16 @@ data1 segment
     invalid_syntax_missing_quotation_message db "A quotation mark is missing, please use the correct syntax given below.", CR, LF, '$'
     invalid_syntax_empty_passphrase_message db "The key (passphrase) cannot be empty.", CR, LF, '$'
     invalid_syntax_too_long_passphrase_message db "The key (passphrase) must be at most 20 characters long.", CR, LF, '$'
-    
+    error_cannot_open_file_input_message db "Cannot open input file", CR, LF, '$'
+    error_cannot_open_file_output_message db "Cannot open output file", CR, LF, "Trying to create a file... ", CR, LF, '$'
+    cannot_create_error_message db "A new file cannot be created. Operation aborted.", CR, LF, '$'
+
     newline db CR, LF, '$'
-    
+
 data1 ends
 
 code1 segment
-        
+
     begin:
         ;Stack initialize
         mov ax, seg p_stack
@@ -43,7 +49,7 @@ code1 segment
         ;;;;;;;;;;;;;;;;;;;;;;
         ;READING ARGS SECTION;
         ;;;;;;;;;;;;;;;;;;;;;;
-        
+
         ;Prepare to reading arguments
         xor cx, cx
         mov cl, byte ptr ds:[080h] ;CL keeps argc + CR
@@ -69,12 +75,12 @@ code1 segment
         inc di
         dec cl
         jmp read_each_char_of_input_file
-        
+
     read_each_char_of_input_file_done:
         ;READ OUTPUT FILE
         mov di, offset output_file_name
         inc si
-        
+
     read_each_char_of_output_file:
         cmp cl, 0h
         jle invalid_syntax_interrupted_arg
@@ -86,8 +92,8 @@ code1 segment
         inc si
         inc di
         dec cl
-        jmp read_each_char_of_output_file    
-        
+        jmp read_each_char_of_output_file
+
     read_each_char_of_output_file_done:
         ;READ PASSPHRASE
         mov di, offset secret_key
@@ -124,18 +130,21 @@ code1 segment
         cmp cl, 0h
         jne read_next_passphrase_char
         jmp invalid_syntax_missing_quotation
-        
+
     passphrase_read_done:
-        
+
+        mov dx, offset arguments_correct
+        call puts
+
         mov ax, seg data1
         mov ds, ax
         mov si, offset key_length
-        mov byte ptr ds:[si], bh 
-    
+        mov byte ptr ds:[si], bh
+
         ;;;;;;;;;;;;;;;;;;;;;;;
         ;OPENING FILES SECTION;
         ;;;;;;;;;;;;;;;;;;;;;;;
-        
+
         ;OPEN INPUT FILE
         mov dx, offset input_file_name
         xor cx, cx
@@ -146,7 +155,7 @@ code1 segment
         ;If an error has occurred the CF is set to 1
         jc error_cannot_open_file_input
         mov word ptr ds:[input_file_handle], ax
-        
+
         ;OPEN OUTPUT FILE
         mov dx, offset output_file_name
         xor cx, cx
@@ -156,12 +165,17 @@ code1 segment
         int 21h
         ;If an error has occurred the CF is set to 1
         jc error_cannot_open_file_output
-        mov word ptr ds:[output_file_handle], ax    
-        
+        mov word ptr ds:[output_file_handle], ax
+
+        mov dx, offset files_open
+        call puts
+
         ;;;;;;;;;;;;;;;;;;;;
         ;;;;READ SECTION;;;;
-        ;;;;;;;;;;;;;;;;;;;;  
-        
+        ;;;;;;;;;;;;;;;;;;;;
+        ;;;XOR ENCRYPTION;;;
+        ;;;;;;;;;;;;;;;;;;;;
+
         ;AH = 3F
         ;BX = file handle
         ;CX = number of bytes to read
@@ -173,10 +187,10 @@ code1 segment
         mov dx, offset buffer
         mov ah, 03fh
         int 021h
-        
+
         cmp ax, 0h
         je crypt_done
-        
+
         mov es, ax ;number of read bytes
         mov cx, ax
         mov si, offset secret_key
@@ -185,7 +199,7 @@ code1 segment
         mov bx, offset key_length
 
     xorring:
-         
+
         cmp ah, ds:[bx]
         jne dont_scrool
         mov ah, 0h
@@ -199,87 +213,110 @@ code1 segment
         inc di
         inc ah
         loop xorring
-        
+
         ;Saving buffer to output_file
-        
+
         ;AH = 40
         ;BX = file handle
         ;CX = number of bytes to write
         ;DS:DX = pointer to buffer to be written
-       
+
         mov cx, es ;number of read bytes which has been just xorred to save
         mov bx, ds:[output_file_handle]
         mov dx, offset buffer
         mov ah, 040h
         int 021h
-        
+
         jmp read_section
-        
+
     crypt_done:
         mov dx, offset data_encryption_done
         call puts
-        
+
         ;;;;;;;;;;;;;;;;;;;;
         ;CLOSE FILE SECTION;
         ;;;;;;;;;;;;;;;;;;;;
-        
+
         mov bx, ds:[input_file_handle]
         mov ah, 03eh
         int 021h
-        
+
         mov bx, ds:[output_file_handle]
         mov ah, 03eh
         int 021h
-        
+
         ;;;;;;;;;;;;;;;;;;;;
         ;;;;EXIT SECTION;;;;
         ;;;;;;;;;;;;;;;;;;;;
-    
+
     ;Exit program with code 0
     finish:
         mov ax, 4c00h
-        int	021h 
-        
+        int 021h
+
         ;;;;;;;;;;;;;;;;;;;;
         ;;;ERRORS SECTION;;;
-        ;;;;;;;;;;;;;;;;;;;;    
-    
+        ;;;;;;;;;;;;;;;;;;;;
+
     invalid_syntax_no_args:
-        mov dx, offset invalid_syntax_no_args_message 
+        mov dx, offset invalid_syntax_no_args_message
         jmp continue_error_message
-        
+
     invalid_syntax_interrupted_arg:
         mov dx, offset invalid_syntax_interrupted_arg_message
         jmp continue_error_message
-        
+
     invalid_syntax_missing_quotation:
         mov dx, offset invalid_syntax_missing_quotation_message
         jmp continue_error_message
-        
+
     invalid_syntax_empty_passphrase:
         mov dx, offset invalid_syntax_empty_passphrase_message
         jmp continue_error_message
-        
+
     invalid_syntax_too_long_passphrase:
         mov dx, offset invalid_syntax_too_long_passphrase_message
         jmp continue_error_message
-        
+
     continue_error_message:
         call puts
         mov dx, offset syntax
         call puts
-        jmp finish 
-        
-        
-    error_cannot_open_file_input:
-    error_cannot_open_file_output:
-        nop
         jmp finish
-    
+
+    ;Cannot open file
+    error_cannot_open_file_input:
+        mov dx, offset error_cannot_open_file_input_message
+        call puts
+        jmp finish
+
+    error_cannot_open_file_output:
+        mov dx, offset error_cannot_open_file_output_message
+        call puts
+
+        ;Create a new file
+        mov ax, seg data1
+        mov ds, ax
+        mov dx, offset output_file_name
+        mov al, 01h ;write only
+        mov ah, 03ch ;create new / truncate existing ie. rewrite
+        int 021h
+        jc cannot_create_error
+        mov ds:[output_file_handle], ax
+
+        mov dx, offset new_file_created
+        call puts
+
+        jmp read_section
+
+    cannot_create_error:
+        mov dx, offset cannot_create_error_message
+        call puts
+
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;Reading,writing and other functions
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    
+
     ;Check if AL is a letter, number or dot (if not exit)
     check_read_char_for_filename:
         cmp al, '.'
@@ -297,7 +334,7 @@ code1 segment
         cmp al, 'z'
         jle good_char
         jmp bad_char_exit
-        
+
     bad_char_exit:
         mov dx, offset invalid_syntax_entered_forbidden_char_message
         call puts
@@ -306,7 +343,7 @@ code1 segment
         jmp finish
     good_char:
         ret
-        
+
     ;Display string from DS:DX
     puts:
         push ax
@@ -318,7 +355,7 @@ code1 segment
         pop ds
         pop ax
         ret
-    
+
     ;Read string into DS:DX
     gets:
         push ax
@@ -326,7 +363,7 @@ code1 segment
         int 021h
         pop ax
         ret
-        
+
     ;Display one character from DL
     putc:
         push ax
@@ -334,18 +371,18 @@ code1 segment
         int 021h
         pop ax
         ret
-        
+
     ;Read character into AL
     getc:
         mov ah, 01h
         int 021h
         ret
-        
+
 code1 ends
 
 stack1 segment stack
     dw 250 dup(?)
-	p_stack dw ?
+    p_stack dw ?
 stack1 ends
 
 end begin
