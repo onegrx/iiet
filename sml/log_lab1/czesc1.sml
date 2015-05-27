@@ -29,7 +29,11 @@ struct
 
   fun max _ = raise NotImplemented
 
-  fun sumTree _ = raise NotImplemented
+  fun sumTree (t:int tree) : int = 
+    case t of
+    Leaf l => l
+    | Node (l, v, r) => v + sumTree l + sumTree r;
+    
   fun depth _ = raise NotImplemented
   fun binSearch _ _ = raise NotImplemented
   fun preorder _ = raise NotImplemented
