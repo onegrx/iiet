@@ -31,18 +31,29 @@ struct
 
   fun sumTree (t:int tree) : int = 
     case t of
-    Leaf l => l
-    | Node (l, v, r) => v + sumTree l + sumTree r;
+        Leaf l => l
+        | Node (l, v, r) => v + sumTree l + sumTree r;
     
   fun depth _ = raise NotImplemented
-  fun binSearch _ _ = raise NotImplemented
+  
+  fun binSearch (t:int tree) (x:int) =
+    case t of
+        Leaf l => l = x
+        | Node (l, v, r) => 
+            if x=v then true
+            else if x < v then binSearch l x
+            else binSearch r x;
+            
   fun preorder _ = raise NotImplemented
 
   fun listAdd _ _ = raise NotImplemented
   fun insert _ _ = raise NotImplemented 
   fun insort _ = raise NotImplemented 
 
-  fun compose _ _  = raise NotImplemented 
+  (*fun compose _ _  = raise NotImplemented*)
+  fun compose f g  = 
+    (fn x => g (f x)) 
+    
   fun curry _ _ _ = raise NotImplemented 
   fun uncurry _ _ = raise NotImplemented
   fun multifun _ _ = raise NotImplemented
