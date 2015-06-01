@@ -946,6 +946,8 @@ Sign_tilde:
     db  00000000b
     db  00000000b
     db  00000000b
+    
+    error_no_args db "You have not entered any arguments", CR, LF, "The correct syntax is asciivga [input_file]", CR, LF, '$'
 
 data1 ends
 
@@ -957,20 +959,68 @@ code1 segment
         mov ss, ax
         mov sp, offset p_stack
         
+        mov cl, byte ptr ds:[080h] ;number of chars in args ie. argc
+        cmp cl, 0h
+        jnz parse_args
+        
+        mov dx, offset error_no_args
+        call error_found
+        
+    parse_args:
+        
+        
+        
+        
+        
+        
+        
+        
         mov dx, seg data1
         mov ds, ax
-        
-        
 
         ;Graphic mode VGA
         ;AH = 00h ie. set video mode
         ;AL = 13h ie. 320x200 Graphics, 256 colours, 1 page
-        mov ax, 013h
-        int 10h
+        ;mov ax, 013h
+        ;int 10h
         
         ;Exit with success
+    finish:
         mov ax, 4c00h
         int 021h
+        
+        
+        
+        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+        ;;Other functions and utilities;;
+        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+        
+    ;Error handling
+    error_found:
+        call puts
+        jmp finish
+        
+    ;Change A-Z into a-z
+    up_to_low:
+        cmp al, 'A'
+        jl up_to_low_end
+        cmp al, 'Z'
+        jg up_to_low_end
+        add al, 32d
+    up_to_low_end:
+        ret
+        
+    ;Display string from DS:DX
+    puts:
+        push ax
+        push ds
+        mov ax, seg data1
+        mov ds, ax
+        mov ah, 09h
+        int 021h
+        pop ds
+        pop ax
+        ret
 
 code1 ends
 
