@@ -106,7 +106,7 @@ Sign_star:
     db  00000000b
     db  00000000b
 
-Sign_plus   
+Sign_plus:
     db  00000000b
     db  00001000b
     db  00001000b
@@ -637,7 +637,7 @@ Sign_underscore:
     db  00000000b
     db  00000000b
 
-Sign_acute
+Sign_acute:
     db  00010000b
     db  00001000b
     db  00000000b
