@@ -985,26 +985,46 @@ code1 segment
         mov ax, seg data1
         mov es, ax
         mov di, offset input_file_name
-    read_each_char_of_input_file:
-        cmp cl, 0h
-        je endofcmdlargs
-        mov al, byte ptr ds:[si]
+        call ignorewhitechars
         call iswhitechar
         cmp dl, 0h
-        je notwhitechar
+        xor ch, ch ;CH will be the length of input_file_name
+        je read_each_char_of_input_file
         
+        mov dx, offset error_no_args
+        call error_found
         
-        
+    read_each_char_of_input_file:
+        cmp cl, 0h
+        je parse_args_end
+        ;In the AL remains a value from calling ignorewhitechars
         call check_read_char_for_filename
+        mov	byte ptr es:[di], al ;save to input_file_name
+        inc si
+        inc di
+        mov al, byte ptr ds:[si]
+        dec cl
+        call iswhitechar
+        cmp dl, 0h
+        jne toomanyargs
+        jmp read_each_char_of_input_file
         
+    toomanyargs:
+        inc cl ;because it was decremented above
+        call ignorewhitechars
+        call iswhitechar
+        cmp dl, 0h
+        jne parse_args_end
         
+        mov dx, offset error_too_many_args
+        call error_found
         
+    parse_args_end:
         
-        
-        
-        notwhitechar:
-        endofcmdlargs:
         nop
+        
+
+        
         
         mov dx, seg data1
         mov ds, ax
