@@ -989,6 +989,12 @@ code1 segment
         cmp cl, 0h
         je endofcmdlargs
         mov al, byte ptr ds:[si]
+        call iswhitechar
+        cmp dl, 0h
+        je notwhitechar
+        
+        
+        
         call check_read_char_for_filename
         
         
@@ -996,7 +1002,7 @@ code1 segment
         
         
         
-        
+        notwhitechar:
         endofcmdlargs:
         nop
         
@@ -1047,7 +1053,7 @@ code1 segment
         pop ax
         ret
         
-    ;Check if AL is white character, returns 1 in DL if yes
+    ;Check if AL is white character, returns 1 in DL if yes, 0 if not white (normal char)
     iswhitechar:
         xor dl, dl
         cmp al, 032d
@@ -1058,6 +1064,33 @@ code1 segment
     whitechar:
         mov dl, 01h
         ret
+        
+    ;Ignore white characters, address in DS:[SI]
+    ;Returns SI pointing to first non-white char.
+    ;CL keeps number of remaining chars in the string
+    ignorewhitechars:
+        push dx
+    
+        mov al, ds:[si]
+        dec cl
+        call iswhitechar
+        cmp dl, 0h
+        je ignorewhitechars_end
+        
+    ignore_loop:
+        cmp cl, 0h
+        je ignorewhitechars_end
+        inc si
+        mov al, byte ptr ds:[si]
+        dec cl
+        call iswhitechar
+        cmp dl, 0h
+        je ignorewhitechars_end
+        jmp ignore_loop
+    ignorewhitechars_end:
+        pop dx
+        ret
+        
         
     ;Check if AL is a letter, number or dot (if not exit)
     check_read_char_for_filename:
