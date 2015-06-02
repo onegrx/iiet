@@ -955,15 +955,19 @@ Sign_tilde:
 
     syntax db "The correct syntax is: asciivga [input_file]", CR, LF, '$'
     
+    buffer db 512 dup(0)
+    
     ;Input file
     input_file_handle dw ?
     input_file_name db 16 dup(0)
 
     ;Errors section
-    error_no_args db "Error: you have not entered any arguments", CR, LF, "The correct syntax is: asciivga [input_file]", CR, LF, '$'
-    error_too_many_args db "Error: you have entered too many arguments", CR, LF, "The correct syntax is: asciivga [input_file]", CR, LF, '$'
+    error_no_args db "Error: you have not entered any arguments.", CR, LF, "The correct syntax is: asciivga [input_file]", CR, LF, '$'
+    error_too_many_args db "Error: you have entered too many arguments.", CR, LF, "The correct syntax is: asciivga [input_file]", CR, LF, '$'
     invalid_syntax_entered_forbidden_char_message db "You have entered a forbidden character.", CR, LF, '$'
-    error_cannot_open_file_input_message db "Cannot open input file", CR, LF, '$'
+    error_cannot_open_file_input_message db "Cannot open input file.", CR, LF, '$'
+    error_cannot_read_file db "Cannot read input file.", CR, LF, '$'
+    error_cannot_close_file db "Cannot properly close file. The program will exit.", CR, LF, '$'
 
 data1 ends
 
@@ -1104,6 +1108,42 @@ code1 segment
         ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
         ;;Other functions and utilities;;
         ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+        
+    ;Read from file
+    readfromfile:
+        push ax
+        mov bx, word ptr ds:[input_file_handle]
+        ;CX is set to 200h = 512d
+        mov dx, offset buffer
+        mov ah, 03fh
+        int 021h
+
+        jc	readfromfile_err ;if an error has occurred the CF equals 1, otherwise 0
+        
+        pop ax
+        ret
+        
+    readfromfile_err:
+        mov bx, word ptr ds:[input_file_handle]
+        mov dx, offset error_cannot_read_file
+        call error_found
+        
+    
+    ;Close file
+    closefile:
+        ;Assumes the file handle in BX
+        push ax
+        mov ah, 03eh
+        int 021h
+        
+        jc closefile_err
+        
+        pop ax
+        ret
+        
+    closefile_err:
+        mov dx, offset error_cannot_close_file
+        call error_found
         
     ;Error handling
     error_found:
