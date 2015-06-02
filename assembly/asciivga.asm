@@ -975,6 +975,10 @@ code1 segment
         mov ss, ax
         mov sp, offset p_stack
         
+        ;;;;;;;;;;;;;;;;;;;;;;;;;;;
+        ;;;PARSIONG CMDLINE ARGS;;;
+        ;;;;;;;;;;;;;;;;;;;;;;;;;;;
+        
         mov cl, byte ptr ds:[080h] ;number of chars in args ie. argc
         cmp cl, 0h
         jnz parse_args
@@ -1024,7 +1028,7 @@ code1 segment
     parse_args_end:
         
         ;;;;;;;;;;;;;;;;;;;;;;;
-        ;;FILE NAME READ DONE;;
+        ;;;;OPENING THE FILE;;;
         ;;;;;;;;;;;;;;;;;;;;;;;
         
         ;Opening the file
@@ -1048,14 +1052,32 @@ code1 segment
         
     file_opened:
     
-        nop
+      
 
-        ;Graphic mode VGA
-        ;AH = 00h ie. set video mode
-        ;AL = 13h ie. 320x200 Graphics, 256 colours, 1 page
-        ;mov ax, 013h
-        ;int 10h
 
+      
+    ;Graphic mode VGA
+    ;AH = 00h ie. set video mode
+    ;AL = 13h ie. 320x200 Graphics, 256 colours, 1 page
+    mov ax, 013h
+    int 010h
+
+    waitforESC:	
+    ;int 016h
+    ;AH = 00
+    ;on return:
+    ;AH = keyboard scan code
+    ;AL = ASCII character or zero if special function key
+
+        mov	ah, 00h 
+        int	016h
+        cmp	al, 27d
+        jne	waitforESC
+    
+        ;Return to text mode
+        mov ah, 0h
+        mov al, 03h
+        int 010h
         
         ;;;;;;;;;;;;;;;;;;;;
         ;;;;EXIT SECTION;;;;
@@ -1065,6 +1087,10 @@ code1 segment
     finish:
         mov ax, 4c00h
         int 021h
+        
+        
+        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
         
         ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
         ;;Other functions and utilities;;
