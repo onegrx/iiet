@@ -1052,17 +1052,26 @@ code1 segment
         
     file_opened:
     
-      
-
-
-      
+        ;;;;;;;;;;;;;;;;;;;;
+        ;;;;DRAW SECTION;;;;
+        ;;;;;;;;;;;;;;;;;;;;
+    
     ;Graphic mode VGA
     ;AH = 00h ie. set video mode
     ;AL = 13h ie. 320x200 Graphics, 256 colours, 1 page
-    mov ax, 013h
-    int 010h
+        mov ax, 013h
+        int 010h
+        
+        mov cx, 200h
+    
+    draw_loop:
+        ;call readfromfile
+        ;call parseanddraw
+        cmp ax, cx ;if less that means the file was entirely read
+        je draw_loop
+        
 
-    waitforESC:	
+    waitforESC:
     ;int 016h
     ;AH = 00
     ;on return:
