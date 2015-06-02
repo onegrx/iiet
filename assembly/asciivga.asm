@@ -955,6 +955,7 @@ Sign_tilde:
 
     syntax db "The correct syntax is: asciivga [input_file]", CR, LF, '$'
     
+    ;Input file
     input_file_handle dw ?
     input_file_name db 16 dup(0)
 
@@ -962,6 +963,7 @@ Sign_tilde:
     error_no_args db "Error: you have not entered any arguments", CR, LF, "The correct syntax is: asciivga [input_file]", CR, LF, '$'
     error_too_many_args db "Error: you have entered too many arguments", CR, LF, "The correct syntax is: asciivga [input_file]", CR, LF, '$'
     invalid_syntax_entered_forbidden_char_message db "You have entered a forbidden character.", CR, LF, '$'
+    error_cannot_open_file_input_message db "Cannot open input file", CR, LF, '$'
 
 data1 ends
 
@@ -1021,26 +1023,48 @@ code1 segment
         
     parse_args_end:
         
-        nop
+        ;;;;;;;;;;;;;;;;;;;;;;;
+        ;;FILE NAME READ DONE;;
+        ;;;;;;;;;;;;;;;;;;;;;;;
         
-
+        ;Opening the file
         
-        
-        mov dx, seg data1
+        mov ax, seg data1
         mov ds, ax
+        
+        xor cx, cx
+        xor ax, ax
+        mov ah, 03dh
+        mov dx, offset input_file_name
+        
+        int 021h
+        jc error_cannot_open_file_input
+        mov word ptr ds:[input_file_handle], ax
+        jmp file_opened
+        
+    error_cannot_open_file_input:
+        mov dx, offset error_cannot_open_file_input_message
+        call error_found
+        
+    file_opened:
+    
+        nop
 
         ;Graphic mode VGA
         ;AH = 00h ie. set video mode
         ;AL = 13h ie. 320x200 Graphics, 256 colours, 1 page
         ;mov ax, 013h
         ;int 10h
+
+        
+        ;;;;;;;;;;;;;;;;;;;;
+        ;;;;EXIT SECTION;;;;
+        ;;;;;;;;;;;;;;;;;;;;
         
         ;Exit with success
     finish:
         mov ax, 4c00h
         int 021h
-        
-        
         
         ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
         ;;Other functions and utilities;;
