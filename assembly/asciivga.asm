@@ -946,8 +946,22 @@ Sign_tilde:
     db  00000000b
     db  00000000b
     db  00000000b
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;END OF BIT MATRICES DEFINITIONS;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     
-    error_no_args db "You have not entered any arguments", CR, LF, "The correct syntax is asciivga [input_file]", CR, LF, '$'
+;MORE DATA DEFINED BELOW
+
+    syntax db "The correct syntax is: asciivga [input_file]", CR, LF, '$'
+    
+    input_file_handle dw ?
+    input_file_name db 16 dup(0)
+
+    ;Errors section
+    error_no_args db "Error: you have not entered any arguments", CR, LF, "The correct syntax is: asciivga [input_file]", CR, LF, '$'
+    error_too_many_args db "Error: you have entered too many arguments", CR, LF, "The correct syntax is: asciivga [input_file]", CR, LF, '$'
+    invalid_syntax_entered_forbidden_char_message db "You have entered a forbidden character.", CR, LF, '$'
 
 data1 ends
 
@@ -967,6 +981,15 @@ code1 segment
         call error_found
         
     parse_args:
+        mov si, 082h
+        mov ax, seg data1
+        mov es, ax
+        mov di, offset input_file_name
+    read_each_char_of_input_file:
+        cmp cl, 0h
+        je endofcmdlargs
+        mov al, byte ptr ds:[si]
+        call check_read_char_for_filename
         
         
         
@@ -974,6 +997,8 @@ code1 segment
         
         
         
+        endofcmdlargs:
+        nop
         
         mov dx, seg data1
         mov ds, ax
@@ -1001,7 +1026,7 @@ code1 segment
         jmp finish
         
     ;Change A-Z into a-z
-    up_to_low:
+    tolower:
         cmp al, 'A'
         jl up_to_low_end
         cmp al, 'Z'
@@ -1021,7 +1046,47 @@ code1 segment
         pop ds
         pop ax
         ret
+        
+    ;Check if AL is white character, returns 1 in DL if yes
+    iswhitechar:
+        xor dl, dl
+        cmp al, 032d
+        je whitechar
+        cmp al, 09d
+        je whitechar
+        ret
+    whitechar:
+        mov dl, 01h
+        ret
+        
+    ;Check if AL is a letter, number or dot (if not exit)
+    check_read_char_for_filename:
+        cmp al, '.'
+        je good_char
+        cmp al, '0'
+        je bad_char_exit
+        cmp al, '9'
+        jle good_char
+        cmp al, 'A'
+        jl bad_char_exit
+        cmp al, 'Z'
+        jle good_char
+        cmp al, 'a'
+        jl bad_char_exit
+        cmp al, 'z'
+        jle good_char
+        jmp bad_char_exit
 
+    bad_char_exit:
+        mov dx, offset invalid_syntax_entered_forbidden_char_message
+        call puts
+        mov dx, offset syntax
+        call puts
+        jmp finish
+    good_char:
+        ret
+        
+        
 code1 ends
 
 stack1 segment stack
