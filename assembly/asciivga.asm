@@ -1180,8 +1180,10 @@ code1 segment
         cmp dl, 01h ;DL = 1 means white char
         je parsecoordY
         mov byte ptr ds:[Xread + 2], al
+        inc si
         
     parsecoordY:
+        inc si
         mov al, byte ptr ds:[si]
         mov byte ptr ds:[Yread], al
         inc si
@@ -1219,7 +1221,7 @@ code1 segment
     ;Draw the sign
     paint:
         
-        ;Whats that TODO
+        ;Load memory address
         mov	ax, 0A000h
         mov	es, ax
         
@@ -1237,6 +1239,8 @@ code1 segment
         add	bx, offset ASCIImatrix
         mov	ax, word ptr ds:[bx]
         mov	bx, ax
+        
+        ret
         
         
         
@@ -1262,6 +1266,8 @@ code1 segment
 		je endofcoordloop
         cmp al, 13d
         je endofcoordloop
+        cmp al, 32d
+        je endofcoordloop
 		sub	al, '0'
         
         push ax
@@ -1272,9 +1278,7 @@ code1 segment
         mov dx, ax
         pop ax
         add dl, al
-        
-		add	dl, al
-        
+                
 		jmp	coordloop
         
     endofcoordloop:
