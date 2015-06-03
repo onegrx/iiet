@@ -1203,14 +1203,28 @@ code1 segment
         call paint
         
         
-        
         ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
         ;;Other functions and utilities;;
         ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
         
     ;Draw the sign
     paint:
-        nop
+        ;Whats that TODO
+        mov	ax, 0A000h
+        mov	es, ax
+        
+        ;Calculating the real coordinates
+        mov	dx, word ptr ds:[Y]	
+        mov	ax, 199d
+        sub	ax, dx
+        mov	word ptr ds:[Y], ax
+        
+        ;Loading the character's bit matrix
+        xor bx, bx
+        mov bl, byte ptr ds:[sign]
+        
+        
+        
         
     ;Extract integer value from string digits
     calucate_coords:
@@ -1247,7 +1261,33 @@ code1 segment
     endofcoordloop:
         ret
         
-        
+    ;Calculate real colour
+    ispropercolor:
+        push ax
+    
+        mov	al, byte ptr ds:[color]
+        call tolower
+
+        mov	byte ptr ds:[color], 15d		
+        cmp	al, 'b'
+        je	propercolor_finish
+
+        mov	byte ptr ds:[color], 40d
+        cmp	al, 'c'
+        je	propercolor_finish
+
+        mov	byte ptr ds:[color], 47d
+        cmp	al, 'z'
+        je	propercolor_finish
+
+        mov	byte ptr ds:[color], 33d
+        cmp	al, 'n'
+        je	propercolor_finish
+
+    propercolor_finish:
+        pop	ax
+        ret	
+    
     ;Read from file
     readfromfile:
         push ax
