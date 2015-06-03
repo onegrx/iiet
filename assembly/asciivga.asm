@@ -947,7 +947,16 @@ Sign_tilde:
     db  00000000b
     db  00000000b
     
-ASCIImatrix dw 0
+ASCIImatrix dw	offset Sign_exclamation, offset Sign_quotation, offset Sign_hash, offset Sign_dollar, offset Sign_percent, offset Sign_ampersand, offset Sign_apostrophe
+			dw	offset Sign_lparen, offset Sign_rparen, offset Sign_star, offset Sign_plus, offset Sign_comma, offset Sign_minus, offset Sign_dot, offset Sign_slash
+			dw	offset Sign_0, offset Sign_1, offset Sign_2, offset Sign_3, offset Sign_4, offset Sign_5, offset Sign_6, offset Sign_7, offset Sign_8, offset Sign_9
+			dw	offset Sign_colon, offset Sign_semicolon, offset Sign_lessthan, offset Sign_equals, offset Sign_greaterthan, offset Sign_?, offset Sign_@, offset Sign_A, offset Sign_B 
+			dw	offset Sign_C, offset Sign_D, offset Sign_E, offset Sign_F, offset Sign_G, offset Sign_H, offset Sign_I, offset Sign_J, offset Sign_K, offset Sign_L
+			dw	offset Sign_M, offset Sign_N, offset Sign_O, offset Sign_P, offset Sign_Q, offset Sign_R, offset Sign_S, offset Sign_T, offset Sign_U, offset Sign_V
+			dw	offset Sign_W, offset Sign_X, offset Sign_Y, offset Sign_Z, offset Sign_lsquarebracket, offset Sign_backslash, offset Sign_rsquarebracket, offset Sign_caret, offset Sign_underscore, offset Sign_acute
+			dw	offset Sign_as, offset Sign_bs, offset Sign_cs, offset Sign_ds, offset Sign_es, offset Sign_fs, offset Sign_gs, offset Sign_hs, offset Sign_is, offset Sign_js
+			dw	offset Sign_ks, offset Sign_ls, offset Sign_ms, offset Sign_ns, offset Sign_os, offset Sign_ps, offset Sign_qs, offset Sign_rs, offset Sign_ss, offset Sign_ts
+			dw	offset Sign_us, offset Sign_vs, offset Sign_ws, offset Sign_xs, offset Sign_ys, offset Sign_zs, offset Sign_lbrace, offset Sign_pipe, offset Sign_rbrace, offset Sign_tilde
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;END OF BIT MATRICES DEFINITIONS;;;;;;;;;;;;;;;;;;;;;;;
@@ -1209,6 +1218,7 @@ code1 segment
         
     ;Draw the sign
     paint:
+        
         ;Whats that TODO
         mov	ax, 0A000h
         mov	es, ax
@@ -1222,6 +1232,11 @@ code1 segment
         ;Loading the character's bit matrix
         xor bx, bx
         mov bl, byte ptr ds:[sign]
+        sub	bl, 33d
+        shl	bx, 1
+        add	bx, offset ASCIImatrix
+        mov	ax, word ptr ds:[bx]
+        mov	bx, ax
         
         
         
@@ -1233,6 +1248,7 @@ code1 segment
         
         mov	al, byte ptr ds:[bx]
         mov	byte ptr ds:[bx], 0d
+        inc bx
         
         sub	al, '0'
         add	dx, ax
@@ -1244,14 +1260,17 @@ code1 segment
 		inc	bx
 		cmp al, 0h
 		je endofcoordloop
+        cmp al, 13d
+        je endofcoordloop
 		sub	al, '0'
         
         push ax
         mov al, 10d
         mul dl
-        pop ax
+        
         
         mov dx, ax
+        pop ax
         add dl, al
         
 		add	dl, al
