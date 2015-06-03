@@ -963,8 +963,8 @@ ASCIImatrix dw 0
     color db 0
     enlargement db 0
     
-    Xread db 3 dup(0)
-    Yread db 3 dup(0)
+    Xread db 4 dup(0)
+    Yread db 4 dup(0)
     
     X dw 0
     Y dw 0    
@@ -1160,19 +1160,93 @@ code1 segment
         mov al, byte ptr ds:[si]
         mov byte ptr ds:[Xread], al
         inc si
-        ;;;;;; here continue
+        mov al, byte ptr ds:[si]
+        call iswhitechar
+        cmp dl, 01h ;DL = 1 means white char
+        je parsecoordY
+        mov byte ptr ds:[Xread + 1], al
+        inc si
+        mov al, byte ptr ds:[si]
+        call iswhitechar
+        cmp dl, 01h ;DL = 1 means white char
+        je parsecoordY
+        mov byte ptr ds:[Xread + 2], al
         
     parsecoordY:
         mov al, byte ptr ds:[si]
-        mov byte ptr ds:[Y], al
+        mov byte ptr ds:[Yread], al
+        inc si
+        mov al, byte ptr ds:[si]
+        call iswhitechar
+        cmp dl, 01h ;DL = 1 means white char
+        je line_loaded_to_vars
+        mov byte ptr ds:[Yread + 1], al
+        inc si
+        mov al, byte ptr ds:[si]
+        call iswhitechar
+        cmp dl, 01h ;DL = 1 means white char
+        je line_loaded_to_vars
+        mov byte ptr ds:[Yread + 2], al
+        
         inc si
         
+        mov bx, offset Xread
+        call calucate_coords
+        mov word ptr ds:[X], dx
+        
+        mov bx, offset Yread
+        call calucate_coords
+        mov word ptr ds:[Y], dx
         
     line_loaded_to_vars:
+    display:
+        call paint
+        
+        
         
         ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
         ;;Other functions and utilities;;
         ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+        
+    ;Draw the sign
+    paint:
+        nop
+        
+    ;Extract integer value from string digits
+    calucate_coords:
+    
+        xor dx, dx
+        
+        mov	al, byte ptr ds:[bx]
+        mov	byte ptr ds:[bx], 0d
+        
+        sub	al, '0'
+        add	dx, ax
+        
+    coordloop:
+
+		mov	al, byte ptr ds:[bx]
+		mov	byte ptr ds:[bx], 0d
+		inc	bx
+		cmp al, 0h
+		je endofcoordloop
+		sub	al, '0'
+        
+        push ax
+        mov al, 10d
+        mul dl
+        pop ax
+        
+        mov dx, ax
+        add dl, al
+        
+		add	dl, al
+        
+		jmp	coordloop
+        
+    endofcoordloop:
+        ret
+        
         
     ;Read from file
     readfromfile:
