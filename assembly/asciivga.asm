@@ -946,6 +946,8 @@ Sign_tilde:
     db  00000000b
     db  00000000b
     db  00000000b
+    
+ASCIImatrix dw 0
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;END OF BIT MATRICES DEFINITIONS;;;;;;;;;;;;;;;;;;;;;;;
@@ -956,6 +958,16 @@ Sign_tilde:
     syntax db "The correct syntax is: asciivga [input_file]", CR, LF, '$'
     
     buffer db 512 dup(0)
+    
+    sign db 0
+    color db 0
+    enlargement db 0
+    
+    Xread db 3 dup(0)
+    Yread db 3 dup(0)
+    
+    X dw 0
+    Y dw 0    
     
     ;Input file
     input_file_handle dw ?
@@ -1069,8 +1081,8 @@ code1 segment
         mov cx, 200h
     
     draw_loop:
-        ;call readfromfile
-        ;call parseanddraw
+        call readfromfile
+        call parseanddraw
         cmp ax, cx ;if less that means the file was entirely read
         je draw_loop
         
@@ -1104,6 +1116,59 @@ code1 segment
         
         ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
         ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+        
+        ;Actually the main section
+        ;=====================================================================
+    parseanddraw:
+        mov si, offset buffer
+        mov cx, ax ;Counter of signs
+        
+    readline:
+        cmp cx, 0h
+        je buffer_empty
+        mov al, byte ptr ds:[si]
+        
+        cmp al, LF
+        jne parseline
+        
+        inc si
+        dec cx
+        
+        
+    buffer_empty:   
+    parseline:
+    
+    parsesign:
+        mov al, byte ptr ds:[si]
+        mov byte ptr ds:[sign], al
+        inc si
+        inc si
+        
+    parsecolor:
+        mov al, byte ptr ds:[si]
+        mov byte ptr ds:[color], al
+        inc si   
+        inc si
+        
+    parseenlargement:
+        mov al, byte ptr ds:[si]
+        mov byte ptr ds:[enlargement], al
+        inc si
+        inc si
+        
+    parsecoordX:
+        mov al, byte ptr ds:[si]
+        mov byte ptr ds:[Xread], al
+        inc si
+        ;;;;;; here continue
+        
+    parsecoordY:
+        mov al, byte ptr ds:[si]
+        mov byte ptr ds:[Y], al
+        inc si
+        
+        
+    line_loaded_to_vars:
         
         ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
         ;;Other functions and utilities;;
